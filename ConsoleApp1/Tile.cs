@@ -6,13 +6,38 @@ namespace Minesweeper
 {
     class Tile
     {
+        private int horizontalPos;
+        private int verticalPos;
         private bool uncovered;
         private bool mine;
         private bool flag;
         private string sign;
         private int normalColour;
         private int minesAround;
+        private List<Tile> tilesAround;
 
+        public int HorizontalPos
+        {
+            get
+            {
+                return horizontalPos;
+            }
+            private set
+            {
+                horizontalPos = value;
+            }
+        }
+        public int VerticalPos
+        {
+            get
+            {
+                return verticalPos;
+            }
+            private set
+            {
+                verticalPos = value;
+            }
+        }
         public bool Uncovered
         {
             get
@@ -80,47 +105,64 @@ namespace Minesweeper
                 minesAround = value;
             }
         }
-        public Tile(int colour, bool bomb)
+        public List<Tile> TilesAround
         {
+            get
+            {
+                return tilesAround;
+            }
+            private set
+            {
+                tilesAround = value;
+            }
+        }
+            
+        public Tile(int horizontal, int vertical, int colour, bool bomb)
+        {
+            HorizontalPos = horizontal;
+            VerticalPos = vertical;
             Sign = "  ";
             Uncovered = false;
             Mine = bomb;
             Flag = false;
             normalColour = colour;
             MinesAround = 0;
+            TilesAround = new List<Tile>();
         }
-        public void MinesAroundCalculator(int x, int y, Tile[,] minefield)
+        public void MinesAndTilesAroundCalculator(int x, int y, Tile[,] minefield)
         {
             int bombsAround = 0;
             try
             {
+                if (minefield[x - 1, y - 1] != null)
+                    TilesAround.Add(minefield[x - 1, y - 1]);
                 if (minefield[x - 1, y - 1].Mine == true)
                     bombsAround++;
-
-                else { };
             }
             catch (IndexOutOfRangeException)
             { };
             try
             {
+                if (minefield[x - 1, y] != null)
+                    TilesAround.Add(minefield[x - 1, y]);
                 if (minefield[x - 1, y].Mine == true)
                     bombsAround++;
-
-                else { };
             }
             catch (IndexOutOfRangeException)
             { };
             try
             {
+                if (minefield[x - 1, y + 1] != null)
+                    TilesAround.Add(minefield[x - 1, y + 1]);
                 if (minefield[x - 1, y + 1].Mine == true)
                     bombsAround++;
-
-                else { };
             }
             catch (IndexOutOfRangeException)
             { };
             try
             {
+                if (minefield[x, y - 1] != null)
+                    TilesAround.Add(minefield[x, y - 1]);
                 if (minefield[x, y - 1].Mine == true)
                     bombsAround++;
 
@@ -130,37 +172,37 @@ namespace Minesweeper
             { };
             try
             {
+                if (minefield[x, y + 1] != null)
+                    TilesAround.Add(minefield[x, y + 1]);
                 if (minefield[x, y + 1].Mine == true)
                     bombsAround++;
-
-                else { };
             }
             catch (IndexOutOfRangeException)
             { };
             try
             {
+                if (minefield[x + 1, y - 1] != null)
+                    TilesAround.Add(minefield[x + 1, y - 1]);
                 if (minefield[x + 1, y - 1].Mine == true)
                     bombsAround++;
-
-                else { };
             }
             catch (IndexOutOfRangeException)
             { };
             try
             {
+                if (minefield[x + 1, y] != null)
+                    TilesAround.Add(minefield[x + 1, y]);
                 if (minefield[x + 1, y].Mine == true)
                     bombsAround++;
-
-                else { };
             }
             catch (IndexOutOfRangeException)
             { };
             try
             {
+                if (minefield[x + 1, y + 1] != null)
+                    TilesAround.Add(minefield[x + 1, y + 1]);
                 if (minefield[x + 1, y + 1].Mine == true)
                     bombsAround++;
-
-                else { };
             }
             catch (IndexOutOfRangeException)
             { };
@@ -175,8 +217,9 @@ namespace Minesweeper
         {
             Flag = false;
         }
-        public void UncoverTile(int Cover1, int Cover2, int Uncover1, int Uncover2, int Horizontal, int Vertical, Tile[,] Minefield)
+        public void UncoverTile(int Cover1, int Cover2, int Uncover1, int Uncover2, int Horizontal, int Vertical, Tile[,] Minefield, Game game)
         {
+            game.UncoveredTilesCounter();
             Uncovered = true;
             Flag = false;
             if (NormalColour == Cover1)
@@ -185,72 +228,23 @@ namespace Minesweeper
                 NormalColour = Uncover2;
             else
             { }
-            if (MinesAround != 0)
-                Sign = MinesAround.ToString() + " ";
-            Game.RecolourTile(NormalColour, Horizontal, Vertical, Minefield);
+            
             if (MinesAround == 0)
             {
-                try
+                foreach (Tile tile in TilesAround)
                 {
-                    if (Minefield[Horizontal - 1, Vertical - 1].Uncovered == false)
-                        Minefield[Horizontal - 1, Vertical - 1].UncoverTile(Cover1, Cover2, Uncover1, Uncover2, Horizontal - 1, Vertical - 1, Minefield);
+                    
+                    if (tile.Uncovered == false)
+                    {
+                        tile.UncoverTile(Cover1, Cover2, Uncover1, Uncover2, tile.HorizontalPos, tile.VerticalPos, Minefield, game);
+                    }
+                        
                 }
-                catch (IndexOutOfRangeException)
-                { }
-                try
-                {
-                    if (Minefield[Horizontal - 1, Vertical].Uncovered == false)
-                        Minefield[Horizontal - 1, Vertical].UncoverTile(Cover1, Cover2, Uncover1, Uncover2, Horizontal - 1, Vertical, Minefield);
-                }
-                catch (IndexOutOfRangeException)
-                { }
-                { }
-                try
-                {
-                    if (Minefield[Horizontal - 1, Vertical + 1].Uncovered == false)
-                         Minefield[Horizontal - 1, Vertical + 1].UncoverTile(Cover1, Cover2, Uncover1, Uncover2, Horizontal - 1, Vertical + 1, Minefield);
-                }
-                catch (IndexOutOfRangeException)
-                { }
-                try
-                {
-                    if (Minefield[Horizontal, Vertical - 1].Uncovered == false)
-                         Minefield[Horizontal, Vertical - 1].UncoverTile(Cover1, Cover2, Uncover1, Uncover2, Horizontal, Vertical - 1, Minefield);
-                }
-                catch (IndexOutOfRangeException)
-                { }
-                try
-                {
-                    if (Minefield[Horizontal, Vertical + 1].Uncovered == false)
-                        Minefield[Horizontal, Vertical + 1].UncoverTile(Cover1, Cover2, Uncover1, Uncover2, Horizontal, Vertical + 1, Minefield);
-
-                }
-                catch (IndexOutOfRangeException)
-                { }
-                
-                try
-                {
-                    if (Minefield[Horizontal + 1, Vertical - 1].Uncovered == false)
-                        Minefield[Horizontal + 1, Vertical - 1].UncoverTile(Cover1, Cover2, Uncover1, Uncover2, Horizontal + 1, Vertical - 1, Minefield);
-                }
-                catch (IndexOutOfRangeException)
-                { }
-                try
-                {
-                    if (Minefield[Horizontal + 1, Vertical].Uncovered == false)
-                         Minefield[Horizontal + 1, Vertical].UncoverTile(Cover1, Cover2, Uncover1, Uncover2, Horizontal + 1, Vertical, Minefield);
-                }
-                catch (IndexOutOfRangeException)
-                { }
-                try
-                {
-                    if (Minefield[Horizontal + 1, Vertical + 1].Uncovered == false)
-                        Minefield[Horizontal + 1, Vertical + 1].UncoverTile(Cover1, Cover2, Uncover1, Uncover2, Horizontal + 1, Vertical + 1, Minefield);
-                }
-                catch (IndexOutOfRangeException)
-                { }
             }
-            
+            else
+                Sign = (MinesAround.ToString() + " ");
+            Game.RecolourTile(NormalColour, Horizontal, Vertical, Minefield);
+
         }
     }
 }

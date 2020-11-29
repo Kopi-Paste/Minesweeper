@@ -23,7 +23,7 @@ namespace Minesweeper
             {
                 for (int y = 0; y < newGame.VerticalTiles; y++)
                 {
-                    newGame.Minefield[x, y].MinesAroundCalculator(x, y, newGame.Minefield);
+                    newGame.Minefield[x, y].MinesAndTilesAroundCalculator(x, y, newGame.Minefield);
                 }
             }
             Console.Clear();
@@ -31,7 +31,11 @@ namespace Minesweeper
             do
             {
                 keypressed = Console.ReadKey(true).Key;
-                newGame.GameAction(keypressed);                
+                newGame.GameAction(keypressed);
+                if (newGame.UncoveredTiles == newGame.TilesWithoutMines)
+                {
+                    newGame.WinGame();
+                }
             } while (newGame.GameFinished == false);
         }
     }

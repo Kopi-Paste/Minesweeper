@@ -177,6 +177,7 @@ namespace Minesweeper
             highlightColour = highlight;
             textColour = text;
             tilesWithoutMines = horizontal * vertical - bombs;
+            UncoveredTiles = 0;
             minefield = new Tile[horizontal, vertical];
             int colour = cover;
             bool mine = false;
@@ -197,14 +198,13 @@ namespace Minesweeper
                         mine = true;
                         remainingBombs--;
                         remainingTiles--;
-                        Console.WriteLine("Mine");
                     }
                     else
                     {
                         mine = false;
                         remainingTiles--;
                     }
-                    Minefield[x, y] = new Tile(colour, mine);
+                    Minefield[x, y] = new Tile(x, y, colour, mine);
                     if (colour == cover)
                         colour = seccover;
                     else
@@ -283,134 +283,84 @@ namespace Minesweeper
                     }
                     else
                     {
-                        thisTile.UncoverTile(CoverColour, CoverSecondaryColour, UncoverColour, UncoverSecondaryColour, HorizontalPosition, VerticalPosition, Minefield);
-                        Game.RecolourTile(HighlightColour, HorizontalPosition, VerticalPosition, Minefield);
+                        thisTile.UncoverTile(CoverColour, CoverSecondaryColour, UncoverColour, UncoverSecondaryColour, HorizontalPosition, VerticalPosition, Minefield, this);
+                        RecolourTile(HighlightColour, HorizontalPosition, VerticalPosition, Minefield);
+
                     }
                     break;
+                case ConsoleKey.H:
+                    Hint();
+                    break;
             }
-            
-            
+        }
+        public void UncoveredTilesCounter()
+        {
+            UncoveredTiles++;
+        }
+        public void WinGame()
+        {
+            Console.WriteLine("You win, gg");
+            GameFinished = true;
+        }
+        public void Hint()
+        {
+            Console.WriteLine(UncoveredTiles);
+            if (UncoveredTiles == 0)
+                GameAction(ConsoleKey.Enter);
+            else
+            {
+                foreach(Tile tile in Minefield)
+                {
+                    if (tile.Uncovered == false)
+                        continue;
+                    int uncoveredTilesAround = 0;
+                    foreach(Tile tileAround in tile.TilesAround)
+                    {
+                        if (tileAround.Uncovered == true)
+                            uncoveredTilesAround++;
+                    }
+                    if (uncoveredTilesAround == tile.MinesAround)
+                    {
+                        foreach(Tile tileAround in tile.TilesAround)
+                        {
+                            if (tileAround.Uncovered == false)
+                            {
+                                NavigateToTile(tileAround);
+                                GameAction(ConsoleKey.Spacebar);
+                                break;
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+        public void NavigateToTile(Tile tile)
+        {
+            if (tile.HorizontalPos > HorizontalPosition)
+            {
+                while (tile.HorizontalPos != HorizontalPosition)
+                    GameAction(ConsoleKey.RightArrow);
+            }
+            else
+            {
+                while (tile.HorizontalPos != HorizontalPosition)
+                    GameAction(ConsoleKey.LeftArrow);
+            }
+            if (tile.VerticalPos > VerticalPosition)
+            {
+                while (tile.VerticalPos != VerticalPosition)
+                    GameAction(ConsoleKey.DownArrow);
+            }
+            else
+            {
+                while (tile.VerticalPos != VerticalPosition)
+                    GameAction(ConsoleKey.UpArrow);
+            }
+
         }
 
     }
-        /*public void HighlightTile()
-        {
-            if (Minefield[HorizontalPosition, VerticalPosition].Flag == true)
-            { }
-            else
-            {
-                Console.SetCursorPosition(2 * (HorizontalPosition + 10), VerticalPosition + 20);
-                Console.BackgroundColor = (ConsoleColor)HighlightColour;
-                Console.Write(Minefield[HorizontalPosition, VerticalPosition].Sign);
-            }
-        }
-        public void UnhighlightTile(ConsoleKey keypressed)
-        {
-            Tile previousHighlighted = null;
-            if (keypressed == ConsoleKey.LeftArrow)
-            {
-                previousHighlighted = Minefield[HorizontalPosition + 1, VerticalPosition];
-                Console.SetCursorPosition(2 * (HorizontalPosition + 11), VerticalPosition + 20);
-            }
-            else if (keypressed == ConsoleKey.RightArrow)
-            {
-                previousHighlighted = Minefield[HorizontalPosition - 1, VerticalPosition];
-                Console.SetCursorPosition(2 * (HorizontalPosition + 9), VerticalPosition + 20);
-            }
-            else if (keypressed == ConsoleKey.UpArrow)
-            {
-                previousHighlighted = Minefield[HorizontalPosition, VerticalPosition + 1];
-                Console.SetCursorPosition(2 * (HorizontalPosition + 10), VerticalPosition + 21);
-            }
-            else if (keypressed == ConsoleKey.DownArrow)
-            {
-                previousHighlighted = Minefield[HorizontalPosition, VerticalPosition - 1];
-                Console.SetCursorPosition(2 * (HorizontalPosition + 10), VerticalPosition + 19);
-            }
-            else { }
-            if (previousHighlighted.Flag == true) { }
-            else
-            {
-                Console.BackgroundColor = (ConsoleColor)previousHighlighted.NormalColour;
-                Console.Write(previousHighlighted.Sign);
-            }
-
-             
-            
-        }
-        public void PrintMinefield()
-        {
-            Console.ForegroundColor = (ConsoleColor)TextColour;
-            for (int x = 0; x < HorizontalTiles; x++)
-            {
-                for (int y = 0; y < VerticalTiles; y++)
-                {
-                    Console.BackgroundColor = (ConsoleColor)Minefield[x, y].NormalColour;
-                    Console.SetCursorPosition(2 * (x + 10), y + 20);
-                    Console.Write(Minefield[x, y].Sign);
-                }
-            }
-            HighlightTile();
-        }
-        public void GameAction(ConsoleKey keypressed)
-        {
-            if (keypressed == ConsoleKey.UpArrow)
-            {
-                if (VerticalPosition == 0) { }
-                else
-                {
-                    VerticalPosition = -1;
-                    HighlightTile();
-                    UnhighlightTile(keypressed);
-                }
-                
-            }
-            else if (keypressed == ConsoleKey.DownArrow)
-            {
-                if (VerticalPosition + 1 == VerticalTiles) { }
-                else
-                {
-                    VerticalPosition = 1;
-                    HighlightTile();
-                    UnhighlightTile(keypressed);
-                }
-            }
-            else if (keypressed == ConsoleKey.LeftArrow)
-            {
-                if (HorizontalPosition == 0) { }
-                else
-                {
-                    HorizontalPosition = -1;
-                    HighlightTile();
-                    UnhighlightTile(keypressed);
-                }
-            }
-            else if (keypressed == ConsoleKey.RightArrow)
-            {
-                if (HorizontalPosition + 1 == HorizontalTiles) { }
-                else
-                {
-                    HorizontalPosition = 1;
-                    HighlightTile();
-                    UnhighlightTile(keypressed);
-                }
-            }
-            else if (keypressed == ConsoleKey.Spacebar)
-            {
-                if (Minefield[HorizontalPosition, VerticalPosition].Flag == false)
-                    Minefield[HorizontalPosition, VerticalPosition].FlagTile(2 * (HorizontalPosition + 10), VerticalPosition + 20, FlagColour);
-                else
-                    Minefield[HorizontalPosition, VerticalPosition].UnflagTile(2 * (HorizontalPosition + 10), VerticalPosition + 20);
-            }
-            else if (keypressed == ConsoleKey.Enter)
-            {
-                if (Minefield[HorizontalPosition, VerticalPosition].Mine == true)
-                {
-                    Console.WriteLine("You lost");
-                    GameFinished = true;
-                }
-                else
-                    Minefield[HorizontalPosition, VerticalPosition].UncoverTile(CoverColour, CoverSecondaryColour, UncoverColour, UncoverSecondaryColour, HorizontalPosition, VerticalPosition, Minefield);
-            }*/
+        
 }
 
